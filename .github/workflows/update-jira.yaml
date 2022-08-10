@@ -63,7 +63,7 @@ jobs:
           curl -sSL \
             -X PATCH \
             -H "Accept: application/vnd.github+json" \
-            -H "Authorization: token $GITHUB_TOKEN" \
+            -H "Authorization: token ${{ secrets.GIST_TOKEN }}" \
             "https://api.github.com/gists/${GIST_ID}" \
             --data @object.json
 

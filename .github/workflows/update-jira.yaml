@@ -1,6 +1,6 @@
 name: Count JIRAs
 on:
-  workflow_call:
+  workflow_dispatch:
     inputs:
       version:
         description: Next release version

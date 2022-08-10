@@ -72,14 +72,14 @@ jobs:
               | .vulnerabilities.important = $vuln_important
             ' object.json)" > object.json
           cat object.json
-      - name: Upload gist
-        run: |
-          curl -sSL \
-            -X PATCH \
-            -H "Accept: application/vnd.github+json" \
-            -H "Authorization: token ${{ secrets.GIST_TOKEN }}" \
-            "https://api.github.com/gists/${GIST_ID}" \
-            --data @object.json
+      - name: Deploy to Gist
+        uses: exuanbo/actions-deploy-gist@v1.1.4
+        with:
+          token: ${{ secrets.GIST_TOKEN }}
+          gist_id: ${GIST_ID}
+          file_path: object.json
+          file_type: text
+          gist_file_name: hackaton.json
 
 
 # hackaton.json

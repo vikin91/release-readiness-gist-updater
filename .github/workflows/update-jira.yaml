@@ -1,4 +1,4 @@
-name: Update release readiness
+name: "Are we ready to release?"
 
 on:
   schedule:

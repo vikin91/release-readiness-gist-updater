@@ -48,11 +48,12 @@ jobs:
           echo "Found $num_open unfinished Jiras for ${{inputs.version}}"
       - name: Fetch gist
         run: |
-          curl -sSL \
-            -H "Accept: application/vnd.github+json" \
-            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-            "https://api.github.com/gists/${{ inputs.gist_id }}" \
-            -o gist.json
+          gh api -H "Accept: application/vnd.github+json" "/gists/${{ inputs.gist_id }}" > gist.json
+          # curl -sSL \
+          #   -H "Accept: application/vnd.github+json" \
+          #   -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+          #   "https://api.github.com/gists/${{ inputs.gist_id }}" \
+          #   -o gist.json
           cat gist.json
           cat gist.json | jq -r '.files."hackaton.json".content' > object.json
           pwd
@@ -66,3 +67,17 @@ jobs:
           file_path: object.json
           file_type: text
           gist_file_name: hackaton.json
+
+
+# hackaton.json
+# {
+#   "tickets_open":7,
+#   "vulnerabilities": {
+#     "low":19,
+#     "medium":8,
+#     "important":0,
+#     "high":0,
+#     "critical":0
+#   },
+#   "osci_branch":false
+# }

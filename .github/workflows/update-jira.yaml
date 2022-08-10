@@ -24,6 +24,7 @@ jobs:
   check-jira:
     name: "Check Open Jira tickets with fixVersion ${{inputs.version}} and update the gist"
     runs-on: ubuntu-latest
+    permissions: read-all|write-all
     steps:
       - name: Query JIRA
         env:

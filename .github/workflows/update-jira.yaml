@@ -1,15 +1,11 @@
-name: Cut RC
+name: Count JIRAs
 on:
-  milestone:
-    types:
-      - closed
-
-  workflow_dispatch:
+  workflow_call:
     inputs:
       version:
         description: Next release version
         required: true
-        default: "3.72"
+        default: "3.72.0"
         type: string
 
 env:
@@ -21,8 +17,7 @@ env:
 
 jobs:
   check-jira:
-    name: Check Jira tickets for release
-    needs: variables
+    name: "Check Open Jira tickets with fixVersion ${{inputs.version}}"
     runs-on: ubuntu-latest
     steps:
       - name: Query JIRA
@@ -30,7 +25,7 @@ jobs:
           JIRA_TOKEN: ${{ secrets.JIRA_TOKEN }}
         run: |
           JQL="project IN (ROX) \
-              AND fixVersion IN (\"${{needs.variables.outputs.release}}\") \
+              AND fixVersion IN (\"${{inputs.version}}\") \
               AND status != CLOSED \
               AND Component != Documentation \
               AND type != Epic \
@@ -40,4 +35,4 @@ jobs:
                 -H "Accept: application/json" \
                 "https://issues.redhat.com/rest/api/2/search" |\
                 jq -r '.issues[] | .key' | sort | awk 'END{print NR}')"
-          echo "Found $num_open unfinished Jiras for ${{needs.variables.outputs.release}}"
+          echo "Found $num_open unfinished Jiras for ${{inputs.version}}"

@@ -47,34 +47,22 @@ jobs:
                 jq -r '.issues[] | .key' | sort | awk 'END{print NR}')"
           echo "Found $num_open unfinished Jiras for ${{inputs.version}}"
       - name: Fetch gist
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          [ -n "$GITHUB_TOKEN" ] || { echo "::error::GITHUB_TOKEN unset"; }
           curl -sSL \
             -H "Accept: application/vnd.github+json" \
-            -H "Authorization: token $GITHUB_TOKEN" \
-            "https://api.github.com/gists/${{inputs.gist_id}}" \
+            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            "https://api.github.com/gists/${{ inputs.gist_id }}" \
             -o gist.json
+          cat gist.json
           cat gist.json | jq -r '.files."hackaton.json".content' > object.json
           pwd
           ls -la
-          cat gist.json
           cat object.json
-      - name: Upload gist
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          [ -n "$GITHUB_TOKEN" ] || { echo "::error::GITHUB_TOKEN unset"; }
-          pwd
-          ls -la
-          cat gist.json
-          cat object.json
-          GIST_CONTENTS="$(cat object.json)"
-          [ -n "$GIST_CONTENTS" ] || { echo "Nothing to upload"; exit 0; }
-          curl -sSL \
-            -X PATCH \
-            -H "Accept: application/vnd.github+json" \
-            -H "Authorization: token $GITHUB_TOKEN" \
-            "https://api.github.com/gists/${{inputs.gist_id}}" \
-            --data @object.json
+      - name: Deploy to Gist
+        uses: exuanbo/actions-deploy-gist@v1.1.4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          gist_id: ${{ inputs.gist_id }}
+          file_path: object.json
+          file_type: text
+          gist_file_name: hackaton.json

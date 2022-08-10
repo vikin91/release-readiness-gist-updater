@@ -22,7 +22,7 @@ env:
 
 jobs:
   check-jira:
-    name: "Check Open Jira tickets with fixVersion ${{inputs.version}}"
+    name: "Check Open Jira tickets with fixVersion ${{inputs.version}} and update the gist"
     runs-on: ubuntu-latest
     steps:
       - name: Query JIRA
@@ -45,10 +45,6 @@ jobs:
                 "https://issues.redhat.com/rest/api/2/search" |\
                 jq -r '.issues[] | .key' | sort | awk 'END{print NR}')"
           echo "Found $num_open unfinished Jiras for ${{inputs.version}}"
-  fetch-and-update-gist:
-    name: "Fetch, update, and upload gist"
-    runs-on: ubuntu-latest
-    steps:
       - name: Fetch gist
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -57,7 +53,7 @@ jobs:
           GIST_CONTENTS="$(curl -sSL \
             -H "Accept: application/vnd.github+json" \
             -H "Authorization: token $GITHUB_TOKEN" \
-            "https://api.github.com/gists/${{inputs.gist_id}}" | jq -r '.files."hackaton.json".content')
+            "https://api.github.com/gists/${{inputs.gist_id}}" | jq -r '.files."hackaton.json".content')"
           echo "::set-env name=GIST_CONTENTS::$GIST_CONTENTS"
       - name: Upload gist
         env:

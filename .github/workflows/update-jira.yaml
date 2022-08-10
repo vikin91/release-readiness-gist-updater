@@ -29,10 +29,8 @@ jobs:
       - name: Query JIRA
         env:
           JIRA_TOKEN: ${{ secrets.JIRA_TOKEN }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           [ -n "$JIRA_TOKEN" ] || { echo "::error::JIRA_TOKEN unset"; exit 1; }
-          [ -n "$GITHUB_TOKEN" ] || { echo "::error::GITHUB_TOKEN unset"; }
 
           JQL="project IN (ROX) \
               AND fixVersion IN (\"${{inputs.version}}\") \
@@ -48,12 +46,11 @@ jobs:
           echo "Found $num_open unfinished Jiras for ${{inputs.version}}"
       - name: Fetch gist
         run: |
-          gh api -H "Accept: application/vnd.github+json" "/gists/${{ inputs.gist_id }}" > gist.json
-          # curl -sSL \
-          #   -H "Accept: application/vnd.github+json" \
-          #   -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-          #   "https://api.github.com/gists/${{ inputs.gist_id }}" \
-          #   -o gist.json
+          curl -sSL \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: token ${{ secrets.GIST_TOKEN }}" \
+            "https://api.github.com/gists/${{ inputs.gist_id }}" \
+            -o gist.json
           cat gist.json
           cat gist.json | jq -r '.files."hackaton.json".content' > object.json
           pwd
@@ -62,7 +59,7 @@ jobs:
       - name: Deploy to Gist
         uses: exuanbo/actions-deploy-gist@v1.1.4
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.GIST_TOKEN }}
           gist_id: ${{ inputs.gist_id }}
           file_path: object.json
           file_type: text

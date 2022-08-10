@@ -43,6 +43,11 @@ jobs:
                 jq -r '.issues[] | .key' | sort | awk 'END{print NR}')"
           echo "Found $num_open unfinished Jiras for ${VERSION}"
           echo "$num_open" > num_open
+      - name: Check image scan vulnerabilities (MOCK)
+        run: |
+          echo "$((1 + $RANDOM % 3))" > vuln_crit
+          echo "$((1 + $RANDOM % 5))" > vuln_high
+          echo "$((1 + $RANDOM % 7))" > vuln_important
       - name: Fetch gist
         run: |
           curl -sSL \
@@ -56,7 +61,16 @@ jobs:
           echo "$(jq \
             --argjson no "$(cat num_open)" \
             --arg up "$(date -u)" \
-            '.tickets_open = $no | .last_update = $up' object.json )" > object.json
+            --argjson vuln_crit "$(cat vuln_crit)" \
+            --argjson vuln_high "$(cat vuln_high)" \
+            --argjson vuln_important "$(cat vuln_important)" \
+            '
+                .tickets_open = $no
+              | .last_update = $up
+              | .vulnerabilities.critical = $vuln_crit
+              | .vulnerabilities.high = $vuln_high
+              | .vulnerabilities.important = $vuln_important
+            ' object.json)" > object.json
           cat object.json
       - name: Upload gist
         run: |

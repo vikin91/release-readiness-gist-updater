@@ -23,7 +23,11 @@ jobs:
       - name: Query JIRA
         env:
           JIRA_TOKEN: ${{ secrets.JIRA_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          [ -n "$JIRA_TOKEN" ] || { echo "::error::JIRA_TOKEN unset"; exit 1; }
+          [ -n "$GITHUB_TOKEN" ] || { echo "::error::GITHUB_TOKEN unset"; }
+
           JQL="project IN (ROX) \
               AND fixVersion IN (\"${{inputs.version}}\") \
               AND status != CLOSED \

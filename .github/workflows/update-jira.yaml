@@ -1,30 +1,24 @@
 name: Count JIRAs
+
 on:
   schedule:
-    - cron: '*/15 * * * *'
+    - cron: '*/5 * * * *'
   workflow_dispatch:
     inputs:
       version:
         description: Next release version
-        required: true
+        required: false
         default: "3.72.0"
         type: string
-      gist_id:
-        description: ID of the gist to be updated
-        required: true
-        type: string
-        default: "7fda2135b348991d302f098abfbc5cf2"
 
 env:
-  jira_projects: ROX, RS, RTOOLS
-  slack_channel: C03KSV3N6N8 #test-release-automation
-  script_url: /repos/${{github.repository}}/contents/.github/workflows/scripts/common.sh?ref=${{github.event.repository.default_branch}}
-  ACCEPT_RAW: "Accept: application/vnd.github.v3.raw"
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  GIST_ID: "7fda2135b348991d302f098abfbc5cf2"
+  DEFAULT_VERSION: "3.72.0"
 
 jobs:
   check-jira:
-    name: "Check Open Jira tickets with fixVersion ${{inputs.version}} and update the gist"
+    name: "Check Open Jira tickets with fixVersion and update the gist"
     runs-on: ubuntu-latest
     permissions: write-all
     steps:
@@ -32,10 +26,12 @@ jobs:
         env:
           JIRA_TOKEN: ${{ secrets.JIRA_TOKEN }}
         run: |
+          INPUT_VERSION="${{inputs.version}}"
+          VERSION="${INPUT_VERSION:-$DEFAULT_VERSION}"
           [ -n "$JIRA_TOKEN" ] || { echo "::error::JIRA_TOKEN unset"; exit 1; }
 
           JQL="project IN (ROX) \
-              AND fixVersion IN (\"${{inputs.version}}\") \
+              AND fixVersion IN (\"${VERSION}\") \
               AND status != CLOSED \
               AND Component != Documentation \
               AND type != Epic \
@@ -45,14 +41,14 @@ jobs:
                 -H "Accept: application/json" \
                 "https://issues.redhat.com/rest/api/2/search" |\
                 jq -r '.issues[] | .key' | sort | awk 'END{print NR}')"
-          echo "Found $num_open unfinished Jiras for ${{inputs.version}}"
+          echo "Found $num_open unfinished Jiras for ${VERSION}"
           echo "$num_open" > num_open
       - name: Fetch gist
         run: |
           curl -sSL \
             -H "Accept: application/vnd.github+json" \
             -H "Authorization: token ${{ secrets.GIST_TOKEN }}" \
-            "https://api.github.com/gists/${{ inputs.gist_id }}" \
+            "https://api.github.com/gists/${GIST_ID}" \
             -o gist.json
           cat gist.json | jq -r '.files."hackaton.json".content' > object.json
       - name: Modify gist
@@ -62,14 +58,14 @@ jobs:
             --arg up "$(date -u)" \
             '.tickets_open = $no | .last_update = $up' object.json )" > object.json
           cat object.json
-      - name: Deploy to Gist
-        uses: exuanbo/actions-deploy-gist@v1.1.4
-        with:
-          token: ${{ secrets.GIST_TOKEN }}
-          gist_id: ${{ inputs.gist_id }}
-          file_path: object.json
-          file_type: text
-          gist_file_name: hackaton.json
+      - name: Upload gist
+        run: |
+          curl -sSL \
+            -X PATCH \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: token $GITHUB_TOKEN" \
+            "https://api.github.com/gists/${GIST_ID}" \
+            --data @object.json
 
 
 # hackaton.json

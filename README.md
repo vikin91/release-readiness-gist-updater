@@ -1,6 +1,6 @@
 # Release-readiness gist updater
 
-[![Are we ready to release?](https://github.com/vikin91/release-readiness-gist-updater/actions/workflows/update-jira.yaml/badge.svg)](https://github.com/vikin91/release-readiness-gist-updater/actions/workflows/update-jira.yaml)
+[![Are we ready to release?](https://github.com/vikin91/release-readiness-gist-updater/actions/workflows/update-gist.yaml/badge.svg)](https://github.com/vikin91/release-readiness-gist-updater/actions/workflows/update-gist.yaml)
 
 This project is a part of Stackrox 2022 Hackathon.
 

@@ -7,6 +7,11 @@ on:
         required: true
         default: "3.72.0"
         type: string
+      gist_id:
+        description: ID of the gist to be updated
+        required: true
+        type: string
+        default: "7fda2135b348991d302f098abfbc5cf2"
 
 env:
   jira_projects: ROX, RS, RTOOLS
@@ -40,3 +45,31 @@ jobs:
                 "https://issues.redhat.com/rest/api/2/search" |\
                 jq -r '.issues[] | .key' | sort | awk 'END{print NR}')"
           echo "Found $num_open unfinished Jiras for ${{inputs.version}}"
+  fetch-and-update-gist:
+    name: "Fetch, update, and upload gist"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fetch gist
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          [ -n "$GITHUB_TOKEN" ] || { echo "::error::GITHUB_TOKEN unset"; }
+          GIST_CONTENTS="$(curl -sSL \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: token $GITHUB_TOKEN" \
+            "https://api.github.com/gists/${{inputs.gist_id}}" | jq -r '.files."hackaton.json".content')
+          echo "::set-env name=GIST_CONTENTS::$GIST_CONTENTS"
+      - name: Upload gist
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          [ -n "$GITHUB_TOKEN" ] || { echo "::error::GITHUB_TOKEN unset"; }
+          echo "Working with GIST:"
+          echo "$GIST_CONTENTS"
+
+          curl -sSL \
+            -X PATCH \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: token $GITHUB_TOKEN" \
+            "https://api.github.com/gists/${{inputs.gist_id}}" \
+            -d "$GIST_CONTENTS"

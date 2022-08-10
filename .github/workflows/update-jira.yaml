@@ -55,13 +55,11 @@ jobs:
           cat gist.json | jq -r '.files."hackaton.json".content' > object.json
       - name: Modify gist
         run: |
-          num_open="$(cat num_open)"
-          tmp=$(mktemp)
-          jq --arg no "$num_open" '.tickets_open = $no' object.json > "$tmp"
-          cat "$tmp"
-          jq --arg up "$(date)" '.last_update = "$up"' "$tmp" > "$tmp"
-          cat "$tmp"
-          mv "$tmp" "object.json"
+          echo "$(jq \
+            --argjson no "$(cat num_open)" \
+            --arg up "$(date -u)" \
+            '.tickets_open = $no | .last_update = $up' object.json )" > object.json
+          cat object.json
       - name: Deploy to Gist
         uses: exuanbo/actions-deploy-gist@v1.1.4
         with:

@@ -44,6 +44,7 @@ jobs:
                 "https://issues.redhat.com/rest/api/2/search" |\
                 jq -r '.issues[] | .key' | sort | awk 'END{print NR}')"
           echo "Found $num_open unfinished Jiras for ${{inputs.version}}"
+          echo "$num_open" > num_open
       - name: Fetch gist
         run: |
           curl -sSL \
@@ -51,11 +52,16 @@ jobs:
             -H "Authorization: token ${{ secrets.GIST_TOKEN }}" \
             "https://api.github.com/gists/${{ inputs.gist_id }}" \
             -o gist.json
-          cat gist.json
           cat gist.json | jq -r '.files."hackaton.json".content' > object.json
-          pwd
-          ls -la
-          cat object.json
+      - name: Modify gist
+        run: |
+          num_open="$(cat num_open)"
+          tmp=$(mktemp)
+          jq --arg no "$num_open" '.tickets_open = $no' object.json > "$tmp"
+          cat "$tmp"
+          jq --arg up "$(date)" '.last_update = "$up"' "$tmp" > "$tmp"
+          cat "$tmp"
+          mv "$tmp" "object.json"
       - name: Deploy to Gist
         uses: exuanbo/actions-deploy-gist@v1.1.4
         with:

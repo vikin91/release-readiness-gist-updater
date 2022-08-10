@@ -54,13 +54,14 @@ jobs:
             -H "Accept: application/vnd.github+json" \
             -H "Authorization: token $GITHUB_TOKEN" \
             "https://api.github.com/gists/${{inputs.gist_id}}" | jq -r '.files."hackaton.json".content')"
-          echo "::set-env name=GIST_CONTENTS::$GIST_CONTENTS"
+          echo "$GIST_CONTENTS" > ".gist.json"
       - name: Upload gist
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           [ -n "$GITHUB_TOKEN" ] || { echo "::error::GITHUB_TOKEN unset"; }
           echo "Working with GIST:"
+          GIST_CONTENTS="$(cat ".gist.json")"
           echo "$GIST_CONTENTS"
 
           curl -sSL \

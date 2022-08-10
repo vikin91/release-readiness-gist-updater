@@ -1,0 +1,43 @@
+name: Cut RC
+on:
+  milestone:
+    types:
+      - closed
+
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Next release version
+        required: true
+        default: "3.72"
+        type: string
+
+env:
+  jira_projects: ROX, RS, RTOOLS
+  slack_channel: C03KSV3N6N8 #test-release-automation
+  script_url: /repos/${{github.repository}}/contents/.github/workflows/scripts/common.sh?ref=${{github.event.repository.default_branch}}
+  ACCEPT_RAW: "Accept: application/vnd.github.v3.raw"
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+jobs:
+  check-jira:
+    name: Check Jira tickets for release
+    needs: variables
+    runs-on: ubuntu-latest
+    steps:
+      - name: Query JIRA
+        env:
+          JIRA_TOKEN: ${{ secrets.JIRA_TOKEN }}
+        run: |
+          JQL="project IN (ROX) \
+              AND fixVersion IN (\"${{needs.variables.outputs.release}}\") \
+              AND status != CLOSED \
+              AND Component != Documentation \
+              AND type != Epic \
+              ORDER BY assignee"
+          num_open="$(curl --fail -sSL --get --data-urlencode "jql=$JQL" \
+                -H "Authorization: Bearer $JIRA_TOKEN" \
+                -H "Accept: application/json" \
+                "https://issues.redhat.com/rest/api/2/search" |\
+                jq -r '.issues[] | .key' | sort | awk 'END{print NR}')"
+          echo "Found $num_open unfinished Jiras for ${{needs.variables.outputs.release}}"

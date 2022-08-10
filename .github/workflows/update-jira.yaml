@@ -1,4 +1,4 @@
-name: Count JIRAs
+name: Update release readiness
 
 on:
   schedule:
@@ -12,17 +12,16 @@ on:
         type: string
 
 env:
-  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   GIST_ID: "7fda2135b348991d302f098abfbc5cf2"
   DEFAULT_VERSION: "3.72.0"
 
 jobs:
-  check-jira:
-    name: "Check Open Jira tickets with fixVersion and update the gist"
+  check-requirements:
+    name: "Check on things that need to be done before the code freeze"
     runs-on: ubuntu-latest
     permissions: write-all
     steps:
-      - name: Query JIRA
+      - name: Check Open Jira tickets with fixVersion
         env:
           JIRA_TOKEN: ${{ secrets.JIRA_TOKEN }}
         run: |
